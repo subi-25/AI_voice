@@ -96,6 +96,9 @@ class Speaker:
                     try:
                         self._init_engine()
                         if self._engine:
+                            import platform
+                            if platform.system() == "Windows":
+                                text = f'<pitch absmiddle="15">{text}</pitch>'
                             self._engine.say(text)
                             self._engine.runAndWait()
                     except Exception as e:
@@ -121,7 +124,9 @@ class Speaker:
                 self._speaking = True
                 try:
                     if self._engine:
-                        self._engine.say(msg)
+                        import platform
+                        out_msg = f'<pitch absmiddle="15">{msg}</pitch>' if platform.system() == "Windows" else msg
+                        self._engine.say(out_msg)
                         self._engine.runAndWait()
                 except Exception as e:
                     print(f"[Speaker] TTS error: {e}")

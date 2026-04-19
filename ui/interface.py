@@ -396,10 +396,10 @@ class AnyaUI:
 
         # Welcome message
         self._anya_message(
-            f"Hello, {self.ai.user_name}! 🌟\n"
-            "I'm Anya, your AI desktop assistant.\n"
-            "Type or click 🎙 to speak — I'll answer right here in chat.\n"
-            "Try saying: 'What time is it?' or 'Tell me a joke' or 'Help'."
+            f"Waku waku! Hello, {self.ai.user_name}! ✨\n"
+            "Anya is here to be your super secret assistant!\n"
+            "Type or click 🎙 to speak to Anya.\n"
+            "Anya likes peanuts!"
         )
         self.chat_input.focus_set()
 

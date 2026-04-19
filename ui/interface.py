@@ -221,9 +221,24 @@ class AnyaUI:
 
         card = tk.Frame(sb, bg=C["surface3"])
         card.pack(fill=tk.X, padx=8, pady=(12, 4))
+        
+        try:
+            from PIL import Image, ImageTk
+            import os
+            # Build absolute path to assets directory
+            av_path = os.path.join(os.path.dirname(__file__), "assets", "anya_avatar.png")
+            if os.path.exists(av_path):
+                img = Image.open(av_path)
+                # Aspect-ratio keeping soft resize to roughly 64x64 or 80x80
+                img = img.resize((70, 70), Image.Resampling.LANCZOS)
+                self.avatar_photo = ImageTk.PhotoImage(img) # persist reference
+                avatar = tk.Label(card, image=self.avatar_photo, bg=C["surface3"])
+            else:
+                avatar = tk.Label(card, text="👩‍💼", font=("Segoe UI", 22), bg=C["surface3"], fg=C["text"])
+        except Exception as e:
+            print("Avatar image load error:", e)
+            avatar = tk.Label(card, text="👩‍💼", font=("Segoe UI", 22), bg=C["surface3"], fg=C["text"])
 
-        avatar = tk.Label(card, text="👩‍💼", font=("Segoe UI", 22),
-                          bg=C["surface3"], fg=C["text"])
         avatar.pack(padx=12, pady=(10, 2))
         self._user_label = tk.Label(card, text=self.ai.user_name,
                                     font=FONT_BODY_B, bg=C["surface3"],

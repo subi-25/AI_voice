@@ -57,10 +57,19 @@ class SystemControl:
                 break
         cmd = cmd or app_name
         try:
-            if SYSTEM == "Windows":
-                subprocess.Popen(cmd, shell=True, creationflags=subprocess.CREATE_NEW_CONSOLE)
+            if cmd == app_name:
+                import webbrowser
+                if SYSTEM == "Windows":
+                    os.system(f'start "" "{app_name}"')
+                elif SYSTEM == "Darwin":
+                    os.system(f'open "{app_name}"')
+                else:
+                    os.system(f'xdg-open "{app_name}"')
             else:
-                subprocess.Popen(cmd, shell=True)
+                if SYSTEM == "Windows":
+                    subprocess.Popen(cmd, shell=True, creationflags=subprocess.CREATE_NEW_CONSOLE)
+                else:
+                    subprocess.Popen(cmd, shell=True)
             return f"✅ Opened {app_name}!"
         except Exception as e:
             return f"❌ Could not open {app_name}: {e}"
@@ -171,6 +180,14 @@ class SystemControl:
             fname = f"anya_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
             path = os.path.join(self._screenshot_dir, fname)
             img.save(path)
+
+            if SYSTEM == "Windows":
+                os.startfile(path)
+            elif SYSTEM == "Darwin":
+                os.system(f'open "{path}"')
+            else:
+                os.system(f'xdg-open "{path}"')
+
             return f"📸 Screenshot saved:\n{path}"
         except Exception as e:
             return f"❌ Screenshot error: {e}"

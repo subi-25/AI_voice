@@ -4,8 +4,6 @@ Anya Speaker — Thread-safe text-to-speech.
 
 import threading
 import queue
-from typing import Optionalimport threading
-import queue
 import os
 from typing import Optional
 

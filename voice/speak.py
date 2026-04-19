@@ -4,50 +4,35 @@ Anya Speaker — Thread-safe text-to-speech.
 
 import threading
 import queue
+from typing import Optionalimport threading
+import queue
+import os
 from typing import Optional
 
 try:
-    import pyttsx3
-    PYTTSX3_AVAILABLE = True
+    import asyncio
+    import edge_tts
+    from playsound import playsound
+    EDGE_AVAILABLE = True
 except ImportError:
-    PYTTSX3_AVAILABLE = False
-    print("⚠️  pyttsx3 not installed. Run: pip install pyttsx3")
-
+    EDGE_AVAILABLE = False
+    print("⚠️  edge-tts or playsound not installed. Run: pip install edge-tts playsound==1.2.2")
 
 class Speaker:
     def __init__(self):
         self._queue: queue.Queue = queue.Queue()
         self._speaking = False
         self._muted = False
-        self._engine = None
-        self._current_rate = 175
-        self._current_volume = 1.0
         self._thread: Optional[threading.Thread] = None
+        self._voice = "en-US-AnaNeural"  # Default Edge Neural Child Voice
+        self._rate_shift = "+10%"
 
-        if PYTTSX3_AVAILABLE:
+        if EDGE_AVAILABLE:
             self._thread = threading.Thread(target=self._worker, daemon=True)
             self._thread.start()
 
-    def _init_engine(self):
-        try:
-            if getattr(self, "_engine", None) is not None:
-                del self._engine
-            
-            self._engine = pyttsx3.init()
-            voices = self._engine.getProperty("voices")
-            for v in voices:
-                name = v.name.lower()
-                if any(k in name for k in ["female", "zira", "samantha", "hazel", "susan"]):
-                    self._engine.setProperty("voice", v.id)
-                    break
-            self._engine.setProperty("rate", self._current_rate)
-            self._engine.setProperty("volume", self._current_volume)
-        except Exception as e:
-            print(f"[Speaker] Engine init error: {e}")
-            self._engine = None
-
     def speak(self, text: str, priority: bool = False):
-        if self._muted or not PYTTSX3_AVAILABLE:
+        if self._muted or not EDGE_AVAILABLE:
             print(f"[Anya] {text}")
             return
         if priority:
@@ -65,24 +50,21 @@ class Speaker:
         self._muted = muted
 
     def set_rate(self, rate: int):
-        self._queue.put({"cmd": "set_rate", "rate": rate})
+        # We can implement dynamic rate shifting, but keeping it fixed for Neural voice
+        pass
 
     def set_volume(self, volume: float):
-        self._queue.put({"cmd": "set_volume", "volume": max(0.0, min(1.0, volume))})
+        pass
 
     @property
     def is_speaking(self):
         return self._speaking
 
     def _worker(self):
-        try:
-            import pythoncom
-            pythoncom.CoInitialize()
-        except ImportError:
-            pass
-
-        self._init_engine()
-
+        # Create an async event loop for edge-tts
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
         while True:
             msg = self._queue.get()
             if msg is None:
@@ -94,47 +76,25 @@ class Speaker:
                     text = msg.get("text")
                     self._speaking = True
                     try:
-                        self._init_engine()
-                        if self._engine:
-                            import platform
-                            if platform.system() == "Windows":
-                                text = f'<pitch absmiddle="15">{text}</pitch>'
-                            self._engine.say(text)
-                            self._engine.runAndWait()
+                        temp_file = os.path.join(os.path.expanduser("~"), "anya_temp_tts.mp3")
+                        if os.path.exists(temp_file):
+                            try:
+                                os.remove(temp_file)
+                            except:
+                                pass
+                        
+                        # Generate the neural speech!
+                        communicate = edge_tts.Communicate(text, self._voice, rate=self._rate_shift)
+                        loop.run_until_complete(communicate.save(temp_file))
+                        
+                        # Play the speech natively
+                        playsound(temp_file)
                     except Exception as e:
                         print(f"[Speaker] TTS error: {e}")
-                        self._init_engine()
                     finally:
                         self._speaking = False
-                elif cmd == "stop":
-                    if self._engine:
-                        try:
-                            self._engine.stop()
-                        except Exception:
-                            pass
-                elif cmd == "set_rate":
-                    self._current_rate = msg.get("rate")
-                    if self._engine:
-                        self._engine.setProperty("rate", self._current_rate)
-                elif cmd == "set_volume":
-                    self._current_volume = msg.get("volume")
-                    if self._engine:
-                        self._engine.setProperty("volume", self._current_volume)
-            else:
-                self._speaking = True
-                try:
-                    if self._engine:
-                        import platform
-                        out_msg = f'<pitch absmiddle="15">{msg}</pitch>' if platform.system() == "Windows" else msg
-                        self._engine.say(out_msg)
-                        self._engine.runAndWait()
-                except Exception as e:
-                    print(f"[Speaker] TTS error: {e}")
-                    self._init_engine()
-                finally:
-                    self._speaking = False
-                    
             self._queue.task_done()
 
     def shutdown(self):
         self._queue.put(None)
+

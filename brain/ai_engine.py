@@ -42,7 +42,7 @@ class AIEngine:
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
-        self.user_name = "Subiksha Ma'am"
+        self.user_name = "Subi"
         self.conversation_history = []
         self.model = None
         self.chat = None

@@ -1,5 +1,5 @@
 # 🧠 Anya AI Desktop Assistant
-### Powered by Google Gemini · Built for Subiksha Ma'am
+### Powered by Google Gemini · Built for Subi
 
 ---
 
@@ -137,4 +137,4 @@ anya_assistant/
 
 ---
 
-Made with 💜 for Subiksha Ma'am
+Made with 💜 for Subi
